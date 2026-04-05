@@ -70,12 +70,18 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 			$local_version  = $local_data['Version'];
 
 			if ( version_compare( $github_version, $local_version, '>' ) ) {
+				$readme_data      = $this->get_remote_readme_data(); // Get compatibility info.
 				$obj              = new stdClass();
 				$obj->slug        = $this->github_repo;
 				$obj->plugin      = $this->plugin_slug;
 				$obj->new_version = $github_version;
 				$obj->url         = $local_data['PluginURI'];
 				$obj->package     = $github_data->zipball_url;
+
+				// COMPATIBILITY INJECTION (Fixes "Unknown Compatibility").
+				$obj->tested       = $readme_data['tested'];
+				$obj->requires     = $readme_data['requires'];
+				$obj->requires_php = $readme_data['requires_php'];
 
 				$asset_url  = 'https://raw.githubusercontent.com/' . $this->github_user . '/' . $this->github_repo . '/main/assets/';
 				$obj->icons = array(
@@ -134,7 +140,7 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 				'sections'     => array(
 					'description'  => '<strong>EWEB - Flex Menu Pro</strong> is a premium, high-performance menu system.',
 					'installation' => '<ul><li>Upload via WordPress.</li><li>Activate the Elite Engine.</li></ul>',
-					'changelog'    => '<h4>18.3.0</h4><ul><li>Milestone: Full Pro Elements updater alignment.</li><li>Fix: Robust folder mapping logic.</li></ul>',
+					'changelog'    => '<h4>18.3.1</h4><ul><li>Fix: Reinforced compatibility metadata (Tested up to 7.0).</li><li>Branding: Assets sync.</li></ul>',
 				),
 			);
 
