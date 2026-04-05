@@ -27,9 +27,11 @@ define( 'SPFA_VERSION', '18.1.5' );
  * Carga del Actualizador Elite.
  */
 if ( is_admin() ) {
-	require_once SPFA_PATH . 'includes/class-eweb-github-updater.php';
-	new EWEB_GitHub_Updater( __FILE__, 'Yisus-Develop', 'eweb-flex-accordion-pro' );
-}
+	// Elite GitHub Updater (Surgical & Secure).
+	if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
+		require_once SPFA_PATH . 'includes/class-eweb-github-updater.php';
+	}
+	new EWEB_GitHub_Updater( __FILE__, 'Yisus-Develop', 'eweb-flex-accordion-pro' );}
 
 // Carga de módulos.
 require_once SPFA_PATH . 'includes/post-types.php';
