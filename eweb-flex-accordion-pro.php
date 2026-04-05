@@ -1,13 +1,13 @@
 <?php
 /**
- * Plugin Name: EWEB Flex Accordion Pro
+ * Plugin Name: EWEB - Flex Accordion Pro
  * Description: Elite Interactive Flex Accordion for WordPress. Premium performance, customizable animations, and seamless integration for modern editors.
- * Version: 18.1.5
- * Author: EWEB 
- * Author URI:  https://github.com/Yisus-Develop
- * Plugin URI:  https://enlaweb.co/
- * Text Domain: eweb-flex-accordion
- * License:     GPL v2 or later
+ * Version: 18.1.6
+ * Author: Yisus Develop
+ * Author URI: https://github.com/Yisus-Develop
+ * Plugin URI: https://enlaweb.co/
+ * Text Domain: eweb-flex-accordion-pro
+ * License: GPL v2 or later
  * Requires at least: 6.0
  * Requires PHP: 8.1+
  *
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Constantes.
 define( 'SPFA_PATH', plugin_dir_path( __FILE__ ) );
 define( 'SPFA_URL', plugin_dir_url( __FILE__ ) );
-define( 'SPFA_VERSION', '18.1.5' );
+define( 'SPFA_VERSION', '18.1.6' );
 
 /**
  * Carga del Actualizador Elite.

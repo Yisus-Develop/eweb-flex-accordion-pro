@@ -10,8 +10,6 @@
     <rule ref="WordPress-Docs"/>
     <rule ref="WordPress-Extra"/>
 
-    <rule ref="Generic.Arrays.DisallowLongArraySyntax"/>
-
     <rule ref="WordPress.WP.I18n">
         <properties>
             <property name="text_domain" type="array">

@@ -23,7 +23,7 @@ class SPFA_Importer {
 	 */
 	public static function import_demo_data() {
 		// Only run if the custom post type exists.
-		if ( ! post_type_exists( 'spfa_menu' ) ) {
+		if ( ! post_type_exists( 'menu_section' ) ) {
 			return;
 		}
 
@@ -34,7 +34,7 @@ class SPFA_Importer {
 			// Check if already exists to avoid duplicates using a modern query.
 			$query = new WP_Query(
 				array(
-					'post_type'              => 'spfa_menu',
+					'post_type'              => 'menu_section',
 					'title'                  => $cat,
 					'posts_per_page'         => 1,
 					'no_found_rows'          => true,
@@ -53,7 +53,7 @@ class SPFA_Importer {
 					'post_title'   => $cat,
 					'post_content' => 'Generic demo content for ' . $cat,
 					'post_status'  => 'publish',
-					'post_type'    => 'spfa_menu',
+					'post_type'    => 'menu_section',
 				)
 			);
 		}

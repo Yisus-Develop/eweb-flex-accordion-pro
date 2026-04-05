@@ -11,14 +11,55 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 
+	/**
+	 * Class EWEB_GitHub_Updater
+	 *
+	 * Handles automatic updates from GitHub repository.
+	 */
 	class EWEB_GitHub_Updater {
 
+		/**
+		 * The plugin main file.
+		 *
+		 * @var string
+		 */
 		private $file;
+
+		/**
+		 * The plugin slug.
+		 *
+		 * @var string
+		 */
 		private $plugin_slug;
+
+		/**
+		 * The GitHub user name.
+		 *
+		 * @var string
+		 */
 		private $github_user;
+
+		/**
+		 * The GitHub repository name.
+		 *
+		 * @var string
+		 */
 		private $github_repo;
+
+		/**
+		 * The GitHub API response.
+		 *
+		 * @var object|false
+		 */
 		private $github_response;
 
+		/**
+		 * Constructor.
+		 *
+		 * @param string $file        The plugin main file.
+		 * @param string $github_user The GitHub user name.
+		 * @param string $github_repo The GitHub repository name.
+		 */
 		public function __construct( $file, $github_user, $github_repo ) {
 			$this->file        = $file;
 			$this->github_user = $github_user;
@@ -27,11 +68,16 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 
 			add_filter( 'pre_set_site_transient_update_plugins', array( $this, 'check_update' ) );
 			add_filter( 'plugins_api', array( $this, 'plugin_popup' ), 10, 3 );
-			
+
 			// Industry standard folder naming logic.
 			add_filter( 'upgrader_source_selection', array( $this, 'fix_folder_name' ), 10, 4 );
 		}
 
+		/**
+		 * Get local plugin data.
+		 *
+		 * @return array
+		 */
 		private function get_local_plugin_data() {
 			if ( ! function_exists( 'get_plugin_data' ) ) {
 				require_once ABSPATH . 'wp-admin/includes/plugin.php';
@@ -39,6 +85,12 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 			return get_plugin_data( $this->file );
 		}
 
+		/**
+		 * Check for updates on GitHub.
+		 *
+		 * @param object $transient The update transient.
+		 * @return object
+		 */
 		public function check_update( $transient ) {
 			if ( empty( $transient->checked ) ) {
 				return $transient;
@@ -58,7 +110,7 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 				$obj->url         = 'https://github.com/' . $this->github_user . '/' . $this->github_repo;
 				$obj->package     = isset( $github_data->zipball_url ) ? $github_data->zipball_url : '';
 
-				$asset_url = 'https://raw.githubusercontent.com/' . $this->github_user . '/' . $this->github_repo . '/main/assets/';
+				$asset_url  = 'https://raw.githubusercontent.com/' . $this->github_user . '/' . $this->github_repo . '/main/assets/';
 				$obj->icons = array(
 					'128x128' => $asset_url . 'icon-128x128.png',
 					'256x256' => $asset_url . 'icon-256x256.png',
@@ -71,6 +123,14 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 			return $transient;
 		}
 
+		/**
+		 * Show plugin information in WordPress popup.
+		 *
+		 * @param object|false $result The result object.
+		 * @param string       $action The action name.
+		 * @param object       $args   The action arguments.
+		 * @return object|false
+		 */
 		public function plugin_popup( $result, $action, $args ) {
 			if ( 'plugin_information' !== $action || $args->slug !== $this->github_repo ) {
 				return $result;
@@ -86,13 +146,13 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 			$readme_data = $this->get_remote_readme_data();
 
 			$result = new stdClass();
-			$result->name           = $local_data['Name'];
-			$result->slug           = $this->github_repo;
-			$result->version        = ltrim( $github_data->tag_name, 'v' );
-			$result->author         = $local_data['Author'];
-			$result->homepage       = $local_data['PluginURI'];
-			$result->download_link  = $github_data->zipball_url;
-			$result->last_updated   = $github_data->published_at;
+			$result->name          = $local_data['Name'];
+			$result->slug          = $this->github_repo;
+			$result->version       = ltrim( $github_data->tag_name, 'v' );
+			$result->author        = $local_data['Author'];
+			$result->homepage      = $local_data['PluginURI'];
+			$result->download_link = $github_data->zipball_url;
+			$result->last_updated  = $github_data->published_at;
 
 			$result->requires     = $readme_data['requires'];
 			$result->tested       = $readme_data['tested'];
@@ -113,19 +173,24 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 			return $result;
 		}
 
+		/**
+		 * Get data from remote readme.txt file.
+		 *
+		 * @return array
+		 */
 		private function get_remote_readme_data() {
 			$url      = 'https://raw.githubusercontent.com/' . $this->github_user . '/' . $this->github_repo . '/main/readme.txt';
 			$response = wp_remote_get( $url, array( 'timeout' => 15 ) );
-			
-			// Hardcoded Elite Fallback to prevent technical messages.
+
+			// Hardcoded Elite Fallback with CORRECT names.
 			$data = array(
 				'requires'     => '6.0',
 				'tested'       => '7.0',
 				'requires_php' => '8.1',
 				'sections'     => array(
-					'description'  => '<strong>EWEB Flex Accordion Pro</strong> is a high-performance, professional accordion menu system built for the modern web. Designed with a Purified Engine and premium assets, it provides a seamless interactive experience.',
-					'installation' => '<ol><li>Upload the plugin via WordPress.</li><li>Activate the plugin.</li><li>Start building high-fidelity menus.</li></ol>',
-					'changelog'    => '<h4>18.1.5</h4><ul><li>Elite UI synchronization.</li><li>Surgical updater improvements.</li></ul>',
+					'description'  => '<strong>EWEB - Flex Accordion Pro</strong> is a premium, high-performance accordion system designed for modern WordPress environments.',
+					'installation' => '<p>Upload the plugin via WordPress and activate it to enable the Elite Accordion engine.</p>',
+					'changelog'    => '<h4>18.1.6</h4><ul><li>Refactor: Unified branding.</li><li>Fix: Improved description sync.</li></ul>',
 				),
 			);
 
@@ -154,11 +219,11 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 			);
 
 			foreach ( $sections as $key => $header ) {
-				$pattern = '/==\s*' . preg_quote( $header ) . '\s*==(.*?)((==\s*[a-z0-9 ]+\s*==)|$)/is';
+				$pattern = '/==\s*' . preg_quote( $header, '/' ) . '\s*==(.*?)((==\s*[a-z0-9 ]+\s*==)|$)/is';
 				if ( preg_match( $pattern, $body, $matches ) ) {
 					$content = trim( $matches[1] );
-					// Clean GitHub specific artifacts.
-					$content = preg_replace( '/^[\s\n\r]*\*[ \t]*/m', '- ', $content );
+					// Clean GitHub specific artifacts (Bullets and Numbers).
+					$content = preg_replace( '/^[\s\n\r]*(\*|[0-9]+\.)[ \t]*/m', '- ', $content );
 					$data['sections'][ $key ] = wpautop( $content );
 				}
 			}
@@ -166,12 +231,17 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 			return $data;
 		}
 
+		/**
+		 * Get latest release data from GitHub API.
+		 *
+		 * @return object|false
+		 */
 		private function get_github_data() {
 			if ( ! empty( $this->github_response ) ) {
 				return $this->github_response;
 			}
 
-			$url = 'https://api.github.com/repos/' . $this->github_user . '/' . $this->github_repo . '/releases/latest';
+			$url      = 'https://api.github.com/repos/' . $this->github_user . '/' . $this->github_repo . '/releases/latest';
 			$response = wp_remote_get( $url, array( 'user-agent' => 'WordPress/' . get_bloginfo( 'version' ) ) );
 
 			if ( is_wp_error( $response ) ) {
@@ -182,6 +252,15 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 			return $this->github_response;
 		}
 
+		/**
+		 * Fix folder name after update.
+		 *
+		 * @param string $source        The source path.
+		 * @param string $remote_source The remote source path.
+		 * @param object $upgrader      The upgrader object.
+		 * @param array  $hook_extra    Extra arguments.
+		 * @return string
+		 */
 		public function fix_folder_name( $source, $remote_source, $upgrader, $hook_extra ) {
 			if ( isset( $hook_extra['plugin'] ) && $hook_extra['plugin'] === $this->plugin_slug ) {
 				global $wp_filesystem;

@@ -21,12 +21,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 function spfa_menu_shortcode( $atts ) {
 	$plugin_url = plugin_dir_url( __DIR__ );
 
-	$sections = get_posts( array(
-		'post_type'      => 'menu_section',
-		'posts_per_page' => -1,
-		'orderby'        => 'menu_order',
-		'order'          => 'ASC',
-	) );
+	$sections = get_posts(
+		array(
+			'post_type'      => 'menu_section',
+			'posts_per_page' => -1,
+			'orderby'        => 'menu_order',
+			'order'          => 'ASC',
+		)
+	);
 
 	if ( empty( $sections ) ) {
 		return '';
@@ -36,7 +38,8 @@ function spfa_menu_shortcode( $atts ) {
 	?>
 	<div class="spfa-main-wrapper">
 		<div class="spfa-nav-grid">
-			<?php foreach ( $sections as $s_index => $section ) : 
+			<?php
+			foreach ( $sections as $s_index => $section ) :
 				$color = get_post_meta( $section->ID, 'spfa_color', true ) ?: '#A52A2A';
 				$thumb = get_the_post_thumbnail_url( $section->ID, 'large' ) ?: ( $plugin_url . 'assets/images/header.webp' );
 				?>
@@ -44,7 +47,7 @@ function spfa_menu_shortcode( $atts ) {
 					<div class="spfa-nav-card" data-section="<?php echo esc_attr( $section->post_name ); ?>">
 						<div class="spfa-nav-visuals">
 							<div class="spfa-nav-thumb-wrap">
-								<img src="<?php echo esc_url( $thumb ); ?>" class="spfa-nav-thumb">
+								<img src="<?php echo esc_url( $thumb ); ?>" class="spfa-nav-thumb" alt="<?php echo esc_attr( $section->post_title ); ?>">
 							</div>
 							<div class="spfa-nav-info">
 								<h3><?php echo wp_kses_post( $section->post_title ); ?></h3>
