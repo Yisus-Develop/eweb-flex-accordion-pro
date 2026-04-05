@@ -46,3 +46,4 @@ A professional, high-performance accordion menu system designed for modern websi
 * Fix: Forced compatibility metadata in transient response.
 * Fix: Asset URLs for icons and banners.
 * New: Added readme.txt for better WordPress recognition.
+ 
