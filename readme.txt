@@ -1,6 +1,6 @@
 === EWEB Flex Accordion Pro ===
-Contributors: EWEB
-Tags: accordion, menu, flex, interactive, gutenberg, elementor
+Contributors: Yisus Develop
+Tags: accordion, menu, flex, interactive
 Requires at least: 6.0
 Tested up to: 7.0
 Requires PHP: 8.1
