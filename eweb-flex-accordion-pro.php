@@ -1,8 +1,8 @@
 <?php
 /**
- * Plugin Name: EWEB - Flex Accordion Pro
- * Description: Elite Interactive Flex Accordion for WordPress. Premium performance, customizable animations, and seamless integration for modern editors.
- * Version: 18.2.0
+ * Plugin Name: EWEB - Flex Menu Accordion Pro
+ * Description: Elite Interactive Food & Restaurant Menu System. Premium performance, customizable animations, and seamless integration for modern editors.
+ * Version: 18.2.2
  * Author: Yisus Develop
  * Author URI: https://github.com/Yisus-Develop
  * Plugin URI: https://enlaweb.co/
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Constantes.
 define( 'SPFA_PATH', plugin_dir_path( __FILE__ ) );
 define( 'SPFA_URL', plugin_dir_url( __FILE__ ) );
-define( 'SPFA_VERSION', '18.2.0' );
+define( 'SPFA_VERSION', '18.2.2' );
 
 /**
  * Carga del Actualizador Elite.
