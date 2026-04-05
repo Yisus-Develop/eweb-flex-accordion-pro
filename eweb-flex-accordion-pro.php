@@ -2,7 +2,7 @@
 /**
  * Plugin Name: EWEB Flex Accordion Pro
  * Description: Elite High-Fidelity Interactive Flex Accordion Menu.
- * Version: 18.1.2
+ * Version: 18.1.3
  * Author:      Yisus Develop
  * Author URI:  https://github.com/Yisus-Develop
  * Plugin URI:  https://enlaweb.co/
@@ -21,14 +21,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Constantes.
 define( 'SPFA_PATH', plugin_dir_path( __FILE__ ) );
 define( 'SPFA_URL', plugin_dir_url( __FILE__ ) );
-define( 'SPFA_VERSION', '18.1.2' );
+define( 'SPFA_VERSION', '18.1.3' );
 
 /**
  * Carga del Actualizador Elite.
  */
 if ( is_admin() ) {
 	require_once SPFA_PATH . 'includes/class-eweb-github-updater.php';
-	new EWEB_GitHub_Updater( __FILE__, 'Yisus-Develop', 'eweb-flex-accordion-pro', 'eweb-flex-accordion-pro' );
+	new EWEB_GitHub_Updater( __FILE__, 'Yisus-Develop', 'eweb-flex-accordion-pro' );
 }
 
 // Carga de módulos.
