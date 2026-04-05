@@ -137,10 +137,6 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 			}
 
 			$github_data = $this->get_github_data();
-			if ( ! $github_data ) {
-				return $result;
-			}
-
 			$local_data  = $this->get_local_plugin_data();
 			$asset_url   = 'https://raw.githubusercontent.com/' . $this->github_user . '/' . $this->github_repo . '/main/assets/';
 			$readme_data = $this->get_remote_readme_data();
@@ -148,11 +144,11 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 			$result = new stdClass();
 			$result->name          = $local_data['Name'];
 			$result->slug          = $this->github_repo;
-			$result->version       = ltrim( $github_data->tag_name, 'v' );
+			$result->version       = ( $github_data ) ? ltrim( $github_data->tag_name, 'v' ) : $local_data['Version'];
 			$result->author        = $local_data['Author'];
 			$result->homepage      = $local_data['PluginURI'];
-			$result->download_link = $github_data->zipball_url;
-			$result->last_updated  = $github_data->published_at;
+			$result->download_link = ( $github_data ) ? $github_data->zipball_url : '';
+			$result->last_updated  = ( $github_data ) ? $github_data->published_at : gmdate( 'Y-m-d H:i:s' );
 
 			$result->requires     = $readme_data['requires'];
 			$result->tested       = $readme_data['tested'];
@@ -174,33 +170,36 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 		}
 
 		/**
-		 * Get data from remote readme.txt file.
+		 * Get data from remote readme.txt file with Robust Parsing and Elite Fallback.
 		 *
 		 * @return array
 		 */
 		private function get_remote_readme_data() {
-			$url      = 'https://raw.githubusercontent.com/' . $this->github_user . '/' . $this->github_repo . '/main/readme.txt';
-			$response = wp_remote_get( $url, array( 'timeout' => 15 ) );
-
-			// Hardcoded Elite Fallback with CORRECT names.
+			// Pre-initialize with ELITE FALLBACK (To never show empty info).
 			$data = array(
 				'requires'     => '6.0',
 				'tested'       => '7.0',
 				'requires_php' => '8.1',
 				'sections'     => array(
-					'description'  => '<strong>EWEB - Flex Accordion Pro</strong> is a premium, high-performance accordion system designed for modern WordPress environments.',
-					'installation' => '<p>Upload the plugin via WordPress and activate it to enable the Elite Accordion engine.</p>',
-					'changelog'    => '<h4>18.1.6</h4><ul><li>Refactor: Unified branding.</li><li>Fix: Improved description sync.</li></ul>',
+					'description'  => '<strong>EWEB - Flex Accordion Pro</strong> is a premium, high-performance accordion system designed for modern WordPress environments. Built for Elite speed and stability.',
+					'installation' => '<ul><li>Upload via WordPress.</li><li>Activate the Elite Engine.</li><li>Enjoy high-fidelity interactive menus.</li></ul>',
+					'changelog'    => '<h4>18.1.6</h4><ul><li>Refactor: Unified branding.</li><li>Fix: Improved description sync logic.</li></ul>',
 				),
 			);
+
+			$url      = 'https://raw.githubusercontent.com/' . $this->github_user . '/' . $this->github_repo . '/main/readme.txt';
+			$response = wp_remote_get( $url, array( 'timeout' => 15 ) );
 
 			if ( is_wp_error( $response ) ) {
 				return $data;
 			}
 
 			$body = wp_remote_retrieve_body( $response );
+			if ( empty( $body ) ) {
+				return $data;
+			}
 
-			// Parse Headers.
+			// 1. Parse Headers (Requires at least, Tested up to, etc.).
 			if ( preg_match( '/Requires at least:\s*(.*)/i', $body, $matches ) ) {
 				$data['requires'] = trim( $matches[1] );
 			}
@@ -211,20 +210,26 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 				$data['requires_php'] = trim( $matches[1] );
 			}
 
-			// Parse Sections - Improved extraction.
-			$sections = array(
+			// 2. Parse Sections with Ultra-Flexible Regex (Robust Parsing).
+			$section_headers = array(
 				'description'  => 'Description',
 				'installation' => 'Installation',
 				'changelog'    => 'Changelog',
 			);
 
-			foreach ( $sections as $key => $header ) {
-				$pattern = '/==\s*' . preg_quote( $header, '/' ) . '\s*==(.*?)((==\s*[a-z0-9 ]+\s*==)|$)/is';
+			foreach ( $section_headers as $key => $header ) {
+				// Regex explanation: Match == Header == case-insensitive, with any spaces, and capture until the next == header or end of file.
+				$pattern = '/==\s*' . preg_quote( $header, '/' ) . '\s*==\s*(.*?)\s*((==\s*[a-zA-Z0-9 ]+\s*==)|$)/is';
 				if ( preg_match( $pattern, $body, $matches ) ) {
 					$content = trim( $matches[1] );
-					// Clean GitHub specific artifacts (Bullets and Numbers).
-					$content = preg_replace( '/^[\s\n\r]*(\*|[0-9]+\.)[ \t]*/m', '- ', $content );
-					$data['sections'][ $key ] = wpautop( $content );
+					if ( ! empty( $content ) ) {
+						// Convert Markdown bullets (*) to standard HTML lists for the WP Popup.
+						$content = preg_replace( '/^\*\s+(.*)$/m', '<li>$1</li>', $content );
+						if ( strpos( $content, '<li>' ) !== false ) {
+							$content = '<ul>' . $content . '</ul>';
+						}
+						$data['sections'][ $key ] = wpautop( $content );
+					}
 				}
 			}
 
