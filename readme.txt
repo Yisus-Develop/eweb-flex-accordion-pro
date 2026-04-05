@@ -2,7 +2,7 @@
 Contributors: Yisus Develop
 Tags: accordion, menu, flex, interactive
 Requires at least: 6.0
-Tested up to: 6.5
+Tested up to: 7.0
 Requires PHP: 8.1
 Stable tag: 18.1.3
 License: GPLv2 or later
