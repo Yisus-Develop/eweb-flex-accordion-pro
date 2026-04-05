@@ -32,7 +32,8 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 
 			add_filter( 'pre_set_site_transient_update_plugins', array( $this, 'check_update' ) );
 			add_filter( 'plugins_api', array( $this, 'plugin_popup' ), 10, 3 );
-			add_filter( 'plugin_action_links_' . $this->plugin_slug, array( $this, 'add_view_details_link' ) );
+			
+			// Only keeping the row meta to avoid duplication next to "Deactivate".
 			add_filter( 'plugin_row_meta', array( $this, 'add_view_details_row_meta' ), 10, 2 );
 
 			// Exact Pro Elements Hook Signature.
@@ -41,11 +42,6 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 
 		private function get_details_url() {
 			return self_admin_url( 'plugin-install.php?tab=plugin-information&plugin=' . $this->github_repo . '&section=description&TB_iframe=true&width=600&height=550' );
-		}
-
-		public function add_view_details_link( $links ) {
-			$links[] = '<a href="' . $this->get_details_url() . '" class="thickbox open-plugin-details-modal">View details</a>';
-			return $links;
 		}
 
 		public function add_view_details_row_meta( $links, $file ) {
@@ -140,7 +136,7 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 				'sections'     => array(
 					'description'  => '<strong>EWEB - Flex Menu Pro</strong> is a premium, high-performance menu system.',
 					'installation' => '<ul><li>Upload via WordPress.</li><li>Activate the Elite Engine.</li></ul>',
-					'changelog'    => '<h4>18.3.1</h4><ul><li>Fix: Reinforced compatibility metadata (Tested up to 7.0).</li><li>Branding: Assets sync.</li></ul>',
+					'changelog'    => '<h4>18.3.2</h4><ul><li>Fix: Removed redundant View details links.</li><li>Compatibility: Validation of the 18.3.1 transient fix.</li></ul>',
 				),
 			);
 

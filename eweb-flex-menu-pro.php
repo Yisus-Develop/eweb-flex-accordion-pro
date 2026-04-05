@@ -2,7 +2,7 @@
 /**
  * Plugin Name: EWEB - Flex Menu Pro
  * Description: Elite Interactive Food & Restaurant Menu System. Premium performance, customizable animations, and seamless integration for modern editors.
- * Version: 18.3.1
+ * Version: 18.3.2
  * Author: Yisus Develop
  * Author URI: https://github.com/Yisus-Develop
  * Plugin URI: https://enlaweb.co/
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Constantes.
 define( 'EFMP_PATH', plugin_dir_path( __FILE__ ) );
 define( 'EFMP_URL', plugin_dir_url( __FILE__ ) );
-define( 'EFMP_VERSION', '18.3.1' );
+define( 'EFMP_VERSION', '18.3.2' );
 
 /**
  * Carga del Actualizador Elite.
