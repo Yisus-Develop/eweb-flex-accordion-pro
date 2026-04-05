@@ -28,7 +28,7 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 			add_filter( 'pre_set_site_transient_update_plugins', array( $this, 'check_update' ) );
 			add_filter( 'plugins_api', array( $this, 'plugin_popup' ), 10, 3 );
 			
-			// Pro-style folder fix during update process.
+			// Industry standard folder naming logic.
 			add_filter( 'upgrader_source_selection', array( $this, 'fix_folder_name' ), 10, 4 );
 		}
 
@@ -98,11 +98,11 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 			$result->tested       = $readme_data['tested'];
 			$result->requires_php = $readme_data['requires_php'];
 
-			// Ensure sections are formatted as HTML.
+			// SECTIONS: Pure Description, Installation, Changelog.
 			$result->sections = array(
-				'description'  => wpautop( $readme_data['sections']['description'] ),
-				'installation' => wpautop( $readme_data['sections']['installation'] ),
-				'changelog'    => wpautop( $readme_data['sections']['changelog'] ),
+				'description'  => $readme_data['sections']['description'],
+				'installation' => $readme_data['sections']['installation'],
+				'changelog'    => $readme_data['sections']['changelog'],
 			);
 
 			$result->banners = array(
@@ -117,14 +117,15 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 			$url      = 'https://raw.githubusercontent.com/' . $this->github_user . '/' . $this->github_repo . '/main/readme.txt';
 			$response = wp_remote_get( $url, array( 'timeout' => 15 ) );
 			
+			// Hardcoded Elite Fallback to prevent technical messages.
 			$data = array(
 				'requires'     => '6.0',
 				'tested'       => '7.0',
 				'requires_php' => '8.1',
 				'sections'     => array(
-					'description'  => 'Elite Interactive Flex Accordion for WordPress.',
-					'installation' => '1. Upload via WordPress dashboard. 2. Activate.',
-					'changelog'    => '18.1.4: Fixed section parsing and metadata synchronization.',
+					'description'  => '<strong>EWEB Flex Accordion Pro</strong> is a high-performance, professional accordion menu system built for the modern web. Designed with a Purified Engine and premium assets, it provides a seamless interactive experience.',
+					'installation' => '<ol><li>Upload the plugin via WordPress.</li><li>Activate the plugin.</li><li>Start building high-fidelity menus.</li></ol>',
+					'changelog'    => '<h4>18.1.5</h4><ul><li>Elite UI synchronization.</li><li>Surgical updater improvements.</li></ul>',
 				),
 			);
 
@@ -134,7 +135,7 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 
 			$body = wp_remote_retrieve_body( $response );
 
-			// Parse Headers with improved regex.
+			// Parse Headers.
 			if ( preg_match( '/Requires at least:\s*(.*)/i', $body, $matches ) ) {
 				$data['requires'] = trim( $matches[1] );
 			}
@@ -145,7 +146,7 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 				$data['requires_php'] = trim( $matches[1] );
 			}
 
-			// Parse Sections with robust greedy regex.
+			// Parse Sections - Improved extraction.
 			$sections = array(
 				'description'  => 'Description',
 				'installation' => 'Installation',
@@ -155,7 +156,10 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 			foreach ( $sections as $key => $header ) {
 				$pattern = '/==\s*' . preg_quote( $header ) . '\s*==(.*?)((==\s*[a-z0-9 ]+\s*==)|$)/is';
 				if ( preg_match( $pattern, $body, $matches ) ) {
-					$data['sections'][ $key ] = trim( $matches[1] );
+					$content = trim( $matches[1] );
+					// Clean GitHub specific artifacts.
+					$content = preg_replace( '/^[\s\n\r]*\*[ \t]*/m', '- ', $content );
+					$data['sections'][ $key ] = wpautop( $content );
 				}
 			}
 
