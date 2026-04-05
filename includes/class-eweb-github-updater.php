@@ -196,12 +196,12 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 			// Pre-initialize with ELITE FALLBACK (To never show empty info).
 			$data = array(
 				'requires'     => '6.0',
-				'tested'       => '7.0',
+				'tested'       => '6.4',
 				'requires_php' => '8.1',
 				'sections'     => array(
 					'description'  => '<strong>EWEB - Flex Accordion Pro</strong> is a premium, high-performance accordion system designed for modern WordPress environments. Built for Elite speed and stability.',
 					'installation' => '<ul><li>Upload via WordPress.</li><li>Activate the Elite Engine.</li><li>Enjoy high-fidelity interactive menus.</li></ul>',
-					'changelog'    => '<h4>18.1.6</h4><ul><li>Refactor: Unified branding.</li><li>Fix: Improved description sync logic.</li></ul>',
+					'changelog'    => '<h4>18.1.8</h4><ul><li>Refactor: Unified branding.</li><li>Fix: Compatibility metadata (Tested up to).</li></ul>',
 				),
 			);
 

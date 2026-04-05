@@ -2,9 +2,9 @@
 Contributors: Yisus Develop
 Tags: accordion, menu, flex, interactive, elementor
 Requires at least: 6.0
-Tested up to: 7.0
+Tested up to: 6.4
 Requires PHP: 8.1
-Stable tag: 18.1.7
+Stable tag: 18.1.8
 License: GPLv2 or later
 
 Elite High-Fidelity Interactive Flex Accordion Menu for WordPress.
@@ -27,6 +27,10 @@ Built with a **"Purified Engine"** and premium layout assets, it ensures a smoot
 * Start building your first interactive menu via the provided shortcodes or blocks.
 
 == Changelog ==
+= 18.1.8 =
+* Fix: Compatibility metadata adjustment to remove "Unknown" version warning.
+* Feat: Forced "View details" link in plugin list for better accessibility.
+
 = 18.1.7 =
 * Feat: Forced "View details" link in plugin list for better accessibility.
 * Fix: Hardened updater logic with Elite Fallback and robust parsing.
