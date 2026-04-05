@@ -1,9 +1,9 @@
 <?php
 /**
  * Plugin Name: EWEB Flex Accordion Pro
- * Description: Elite High-Fidelity Interactive Flex Accordion Menu.
+ * Description: Elite Interactive Flex Accordion for WordPress. Premium performance, customizable animations, and seamless integration for modern editors.
  * Version: 18.1.3
- * Author:      Yisus Develop
+ * Author: EWEB 
  * Author URI:  https://github.com/Yisus-Develop
  * Plugin URI:  https://enlaweb.co/
  * Text Domain: eweb-flex-accordion
