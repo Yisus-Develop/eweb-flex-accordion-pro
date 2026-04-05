@@ -90,7 +90,7 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 		}
 
 		/**
-		 * Add "View details" link to action links (next to Activate/Deactivate).
+		 * Add "View details" link to action links.
 		 *
 		 * @param array $links Existing links.
 		 * @return array
@@ -101,7 +101,7 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 		}
 
 		/**
-		 * Add "View details" link to row meta (below description).
+		 * Add "View details" link to row meta.
 		 *
 		 * @param array  $links Existing links.
 		 * @param string $file  The plugin file.
@@ -151,6 +151,14 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 				$obj->url         = 'https://github.com/' . $this->github_user . '/' . $this->github_repo;
 				$obj->package     = isset( $github_data->zipball_url ) ? $github_data->zipball_url : '';
 
+				// RESTORE ICONS.
+				$asset_url  = 'https://raw.githubusercontent.com/' . $this->github_user . '/' . $this->github_repo . '/main/assets/';
+				$obj->icons = array(
+					'128x128' => $asset_url . 'icon-128x128.png',
+					'256x256' => $asset_url . 'icon-256x256.png',
+					'default' => $asset_url . 'icon-256x256.png',
+				);
+
 				$transient->response[ $this->plugin_slug ] = $obj;
 			}
 
@@ -173,6 +181,7 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 			$github_data = $this->get_github_data();
 			$local_data  = $this->get_local_plugin_data();
 			$readme_data = $this->get_remote_readme_data();
+			$asset_url   = 'https://raw.githubusercontent.com/' . $this->github_user . '/' . $this->github_repo . '/main/assets/';
 
 			$result = new stdClass();
 			$result->name          = $local_data['Name'];
@@ -193,23 +202,30 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 				'changelog'    => $readme_data['sections']['changelog'],
 			);
 
+			// RESTORE BANNERS.
+			$result->banners = array(
+				'low'  => $asset_url . 'banner-772x250.png',
+				'high' => $asset_url . 'banner-1544x500.png',
+			);
+
 			return $result;
 		}
 
 		/**
-		 * Get data from remote readme.txt.
+		 * Get data from remote readme.txt with Robust Parsing.
 		 *
 		 * @return array
 		 */
 		private function get_remote_readme_data() {
+			// ELITE FALLBACK (Rich Version).
 			$data = array(
 				'requires'     => '6.0',
 				'tested'       => '7.0',
 				'requires_php' => '8.1',
 				'sections'     => array(
-					'description'  => '<strong>EWEB - Flex Menu Pro</strong> is a premium, high-performance menu system.',
-					'installation' => '<ul><li>Upload via WordPress.</li><li>Activate the Elite Engine.</li></ul>',
-					'changelog'    => '<h4>18.2.8</h4><ul><li>Fix: Reinforced "View details" link visibility.</li><li>Verification: Update system test version.</li></ul>',
+					'description'  => '<strong>EWEB - Flex Menu Pro</strong> is a premium, high-performance menu system designed for modern WordPress environments. Built for Elite speed and stability.',
+					'installation' => '<ul><li>Upload via WordPress.</li><li>Activate the Elite Engine.</li><li>Enjoy high-fidelity interactive food menus.</li></ul>',
+					'changelog'    => '<h4>18.2.9</h4><ul><li>Branding: Restored all visual assets (banners/icons).</li><li>Fix: Reinforced visibility links.</li></ul>',
 				),
 			);
 
@@ -219,6 +235,7 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 			if ( ! is_wp_error( $response ) ) {
 				$body = wp_remote_retrieve_body( $response );
 				if ( ! empty( $body ) ) {
+					// Parse Headers.
 					if ( preg_match( '/Requires at least:\s*(.*)/i', $body, $matches ) ) {
 						$data['requires'] = trim( $matches[1] );
 					}
@@ -227,6 +244,20 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 					}
 					if ( preg_match( '/Requires PHP:\s*(.*)/i', $body, $matches ) ) {
 						$data['requires_php'] = trim( $matches[1] );
+					}
+
+					// Parse Sections (Robust Regex).
+					$headers = array( 'description' => 'Description', 'installation' => 'Installation', 'changelog' => 'Changelog' );
+					foreach ( $headers as $key => $header ) {
+						$pattern = '/==\s*' . preg_quote( $header, '/' ) . '\s*==\s*(.*?)\s*((==\s*[a-zA-Z0-9 ]+\s*==)|$)/is';
+						if ( preg_match( $pattern, $body, $matches ) ) {
+							$content = trim( $matches[1] );
+							$content = preg_replace( '/^\*\s+(.*)$/m', '<li>$1</li>', $content );
+							if ( strpos( $content, '<li>' ) !== false ) {
+								$content = '<ul>' . $content . '</ul>';
+							}
+							$data['sections'][ $key ] = wpautop( $content );
+						}
 					}
 				}
 			}
