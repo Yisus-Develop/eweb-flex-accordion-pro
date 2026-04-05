@@ -2,7 +2,7 @@
 /**
  * Plugin Name: EWEB - Flex Menu Pro
  * Description: Elite Interactive Food & Restaurant Menu System. Premium performance, customizable animations, and seamless integration for modern editors.
- * Version: 18.2.5
+ * Version: 18.2.6
  * Author: Yisus Develop
  * Author URI: https://github.com/Yisus-Develop
  * Plugin URI: https://enlaweb.co/
@@ -19,9 +19,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Constantes.
-define( 'SPFA_PATH', plugin_dir_path( __FILE__ ) );
-define( 'SPFA_URL', plugin_dir_url( __FILE__ ) );
-define( 'SPFA_VERSION', '18.2.5' );
+define( 'EFMP_PATH', plugin_dir_path( __FILE__ ) );
+define( 'EFMP_URL', plugin_dir_url( __FILE__ ) );
+define( 'EFMP_VERSION', '18.2.6' );
 
 /**
  * Carga del Actualizador Elite.
@@ -29,16 +29,16 @@ define( 'SPFA_VERSION', '18.2.5' );
 if ( is_admin() ) {
 	// Elite GitHub Updater (Surgical & Secure).
 	if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
-		require_once SPFA_PATH . 'includes/class-eweb-github-updater.php';
+		require_once EFMP_PATH . 'includes/class-eweb-github-updater.php';
 	}
 	new EWEB_GitHub_Updater( __FILE__, 'Yisus-Develop', 'eweb-flex-menu-pro' );
 }
 
-// Carga de módulos.
-require_once SPFA_PATH . 'includes/post-types.php';
-require_once SPFA_PATH . 'includes/shortcode.php';
-require_once SPFA_PATH . 'includes/enqueue.php';
-require_once SPFA_PATH . 'includes/class-spfa-importer.php';
+// Carga de módulos (Usando los nuevos prefijos EFMP).
+require_once EFMP_PATH . 'includes/post-types.php';
+require_once EFMP_PATH . 'includes/shortcode.php';
+require_once EFMP_PATH . 'includes/enqueue.php';
+require_once EFMP_PATH . 'includes/class-spfa-importer.php';
 
 // Inicialización.
 add_action( 'init', 'spfa_register_post_types' );
