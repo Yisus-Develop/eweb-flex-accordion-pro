@@ -72,22 +72,45 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 			// Hook into the plugin details popup.
 			add_filter( 'plugins_api', array( $this, 'plugin_popup' ), 10, 3 );
 
-			// FORCE "View details" link.
+			// Hook for the "View details" link in the plugin list.
 			add_filter( 'plugin_action_links_' . $this->plugin_slug, array( $this, 'add_view_details_link' ) );
+			add_filter( 'plugin_row_meta', array( $this, 'add_view_details_row_meta' ), 10, 2 );
 
 			// Folder Selection Fix (Elite Folder Mapping).
 			add_filter( 'upgrader_source_selection', array( $this, 'upgrader_source_selection' ), 10, 2 );
 		}
 
 		/**
-		 * Add a manual "View details" link to the plugin row.
+		 * Get the details URL for the thickbox popup.
+		 *
+		 * @return string
+		 */
+		private function get_details_url() {
+			return self_admin_url( 'plugin-install.php?tab=plugin-information&plugin=' . $this->github_repo . '&section=description&TB_iframe=true&width=600&height=550' );
+		}
+
+		/**
+		 * Add "View details" link to action links (next to Activate/Deactivate).
 		 *
 		 * @param array $links Existing links.
 		 * @return array
 		 */
 		public function add_view_details_link( $links ) {
-			$details_url = self_admin_url( 'plugin-install.php?tab=plugin-information&plugin=' . $this->github_repo . '&section=description&TB_iframe=true&width=600&height=550' );
-			$links[]     = '<a href="' . $details_url . '" class="thickbox open-plugin-details-modal">View details</a>';
+			$links[] = '<a href="' . $this->get_details_url() . '" class="thickbox open-plugin-details-modal">View details</a>';
+			return $links;
+		}
+
+		/**
+		 * Add "View details" link to row meta (below description).
+		 *
+		 * @param array  $links Existing links.
+		 * @param string $file  The plugin file.
+		 * @return array
+		 */
+		public function add_view_details_row_meta( $links, $file ) {
+			if ( $file === $this->plugin_slug ) {
+				$links[] = '<a href="' . $this->get_details_url() . '" class="thickbox open-plugin-details-modal">View details</a>';
+			}
 			return $links;
 		}
 
@@ -186,7 +209,7 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 				'sections'     => array(
 					'description'  => '<strong>EWEB - Flex Menu Pro</strong> is a premium, high-performance menu system.',
 					'installation' => '<ul><li>Upload via WordPress.</li><li>Activate the Elite Engine.</li></ul>',
-					'changelog'    => '<h4>18.2.5</h4><ul><li>Elite Sync: Synchronized repository to eweb-flex-menu-pro.</li><li>Branding: Perfected Menu Pro identity.</li></ul>',
+					'changelog'    => '<h4>18.2.8</h4><ul><li>Fix: Reinforced "View details" link visibility.</li><li>Verification: Update system test version.</li></ul>',
 				),
 			);
 
