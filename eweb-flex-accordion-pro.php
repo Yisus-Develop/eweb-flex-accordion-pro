@@ -2,7 +2,7 @@
 /**
  * Plugin Name: EWEB - Flex Accordion Pro
  * Description: Elite Interactive Flex Accordion for WordPress. Premium performance, customizable animations, and seamless integration for modern editors.
- * Version: 18.1.6
+ * Version: 18.1.7
  * Author: Yisus Develop
  * Author URI: https://github.com/Yisus-Develop
  * Plugin URI: https://enlaweb.co/
@@ -21,7 +21,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 // Constantes.
 define( 'SPFA_PATH', plugin_dir_path( __FILE__ ) );
 define( 'SPFA_URL', plugin_dir_url( __FILE__ ) );
-define( 'SPFA_VERSION', '18.1.6' );
+define( 'SPFA_VERSION', '18.1.7' );
 
 /**
  * Carga del Actualizador Elite.
@@ -31,7 +31,8 @@ if ( is_admin() ) {
 	if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 		require_once SPFA_PATH . 'includes/class-eweb-github-updater.php';
 	}
-	new EWEB_GitHub_Updater( __FILE__, 'Yisus-Develop', 'eweb-flex-accordion-pro' );}
+	new EWEB_GitHub_Updater( __FILE__, 'Yisus-Develop', 'eweb-flex-accordion-pro' );
+}
 
 // Carga de módulos.
 require_once SPFA_PATH . 'includes/post-types.php';
