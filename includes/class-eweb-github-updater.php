@@ -26,7 +26,7 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 		private $file;
 
 		/**
-		 * The plugin slug.
+		 * The plugin slug (folder/file.php).
 		 *
 		 * @var string
 		 */
@@ -66,11 +66,29 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 			$this->github_repo = $github_repo;
 			$this->plugin_slug = plugin_basename( $file );
 
+			// Hook into update checks.
 			add_filter( 'pre_set_site_transient_update_plugins', array( $this, 'check_update' ) );
+
+			// Hook into the plugin details popup.
 			add_filter( 'plugins_api', array( $this, 'plugin_popup' ), 10, 3 );
+
+			// FORCE "View details" link in the plugin list row.
+			add_filter( 'plugin_action_links_' . $this->plugin_slug, array( $this, 'add_view_details_link' ) );
 
 			// Industry standard folder naming logic.
 			add_filter( 'upgrader_source_selection', array( $this, 'fix_folder_name' ), 10, 4 );
+		}
+
+		/**
+		 * Add a manual "View details" link to the plugin row.
+		 *
+		 * @param array $links Existing links.
+		 * @return array
+		 */
+		public function add_view_details_link( $links ) {
+			$details_url = self_admin_url( 'plugin-install.php?tab=plugin-information&plugin=' . $this->github_repo . '&section=description&TB_iframe=true&width=600&height=550' );
+			$links[]     = '<a href="' . $details_url . '" class="thickbox open-plugin-details-modal">View details</a>';
+			return $links;
 		}
 
 		/**
@@ -104,7 +122,7 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 
 			if ( $github_data && ! empty( $github_version ) && version_compare( $github_version, $local_version, '>' ) ) {
 				$obj              = new stdClass();
-				$obj->slug        = $this->github_repo;
+				$obj->slug        = $this->github_repo; // Must match the 'plugin' parameter in the URL.
 				$obj->plugin      = $this->plugin_slug;
 				$obj->new_version = $github_version;
 				$obj->url         = 'https://github.com/' . $this->github_user . '/' . $this->github_repo;
@@ -199,7 +217,7 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 				return $data;
 			}
 
-			// 1. Parse Headers (Requires at least, Tested up to, etc.).
+			// 1. Parse Headers.
 			if ( preg_match( '/Requires at least:\s*(.*)/i', $body, $matches ) ) {
 				$data['requires'] = trim( $matches[1] );
 			}
@@ -218,12 +236,11 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 			);
 
 			foreach ( $section_headers as $key => $header ) {
-				// Regex explanation: Match == Header == case-insensitive, with any spaces, and capture until the next == header or end of file.
 				$pattern = '/==\s*' . preg_quote( $header, '/' ) . '\s*==\s*(.*?)\s*((==\s*[a-zA-Z0-9 ]+\s*==)|$)/is';
 				if ( preg_match( $pattern, $body, $matches ) ) {
 					$content = trim( $matches[1] );
 					if ( ! empty( $content ) ) {
-						// Convert Markdown bullets (*) to standard HTML lists for the WP Popup.
+						// Convert Markdown bullets (*) to standard HTML lists.
 						$content = preg_replace( '/^\*\s+(.*)$/m', '<li>$1</li>', $content );
 						if ( strpos( $content, '<li>' ) !== false ) {
 							$content = '<ul>' . $content . '</ul>';
