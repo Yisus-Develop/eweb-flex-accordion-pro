@@ -28,7 +28,7 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 			add_filter( 'pre_set_site_transient_update_plugins', array( $this, 'check_update' ) );
 			add_filter( 'plugins_api', array( $this, 'plugin_popup' ), 10, 3 );
 			
-			// Pro Elements Style: Correct folder naming during update.
+			// Pro-style folder fix during update process.
 			add_filter( 'upgrader_source_selection', array( $this, 'fix_folder_name' ), 10, 4 );
 		}
 
@@ -98,11 +98,11 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 			$result->tested       = $readme_data['tested'];
 			$result->requires_php = $readme_data['requires_php'];
 
-			// SECTIONS: Description, Installation, Changelog.
+			// Ensure sections are formatted as HTML.
 			$result->sections = array(
-				'description'  => $readme_data['sections']['description'],
-				'installation' => $readme_data['sections']['installation'],
-				'changelog'    => $readme_data['sections']['changelog'],
+				'description'  => wpautop( $readme_data['sections']['description'] ),
+				'installation' => wpautop( $readme_data['sections']['installation'] ),
+				'changelog'    => wpautop( $readme_data['sections']['changelog'] ),
 			);
 
 			$result->banners = array(
@@ -115,16 +115,16 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 
 		private function get_remote_readme_data() {
 			$url      = 'https://raw.githubusercontent.com/' . $this->github_user . '/' . $this->github_repo . '/main/readme.txt';
-			$response = wp_remote_get( $url, array( 'timeout' => 10 ) );
+			$response = wp_remote_get( $url, array( 'timeout' => 15 ) );
 			
 			$data = array(
 				'requires'     => '6.0',
 				'tested'       => '7.0',
 				'requires_php' => '8.1',
 				'sections'     => array(
-					'description'  => '',
-					'installation' => '',
-					'changelog'    => '',
+					'description'  => 'Elite Interactive Flex Accordion for WordPress.',
+					'installation' => '1. Upload via WordPress dashboard. 2. Activate.',
+					'changelog'    => '18.1.4: Fixed section parsing and metadata synchronization.',
 				),
 			);
 
@@ -134,26 +134,28 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 
 			$body = wp_remote_retrieve_body( $response );
 
-			// Parse Headers.
-			preg_match( '/Requires at least:\s*(.*)/i', $body, $requires );
-			preg_match( '/Tested up to:\s*(.*)/i', $body, $tested );
-			preg_match( '/Requires PHP:\s*(.*)/i', $body, $requires_php );
+			// Parse Headers with improved regex.
+			if ( preg_match( '/Requires at least:\s*(.*)/i', $body, $matches ) ) {
+				$data['requires'] = trim( $matches[1] );
+			}
+			if ( preg_match( '/Tested up to:\s*(.*)/i', $body, $matches ) ) {
+				$data['tested'] = trim( $matches[1] );
+			}
+			if ( preg_match( '/Requires PHP:\s*(.*)/i', $body, $matches ) ) {
+				$data['requires_php'] = trim( $matches[1] );
+			}
 
-			$data['requires']     = isset( $requires[1] ) ? trim( $requires[1] ) : $data['requires'];
-			$data['tested']       = isset( $tested[1] ) ? trim( $tested[1] ) : $data['tested'];
-			$data['requires_php'] = isset( $requires_php[1] ) ? trim( $requires_php[1] ) : $data['requires_php'];
-
-			// Parse Sections.
+			// Parse Sections with robust greedy regex.
 			$sections = array(
-				'description'  => '== Description ==',
-				'installation' => '== Installation ==',
-				'changelog'    => '== Changelog ==',
+				'description'  => 'Description',
+				'installation' => 'Installation',
+				'changelog'    => 'Changelog',
 			);
 
 			foreach ( $sections as $key => $header ) {
-				$pattern = '/' . preg_quote( $header ) . '(.*?)((== [a-z0-9 ]+ ==)|$)/is';
+				$pattern = '/==\s*' . preg_quote( $header ) . '\s*==(.*?)((==\s*[a-z0-9 ]+\s*==)|$)/is';
 				if ( preg_match( $pattern, $body, $matches ) ) {
-					$data['sections'][ $key ] = wp_kses_post( trim( $matches[1] ) );
+					$data['sections'][ $key ] = trim( $matches[1] );
 				}
 			}
 
