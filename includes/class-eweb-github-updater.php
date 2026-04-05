@@ -72,11 +72,11 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 			// Hook into the plugin details popup.
 			add_filter( 'plugins_api', array( $this, 'plugin_popup' ), 10, 3 );
 
-			// FORCE "View details" link in the plugin list row.
+			// FORCE "View details" link.
 			add_filter( 'plugin_action_links_' . $this->plugin_slug, array( $this, 'add_view_details_link' ) );
 
-			// Industry standard folder naming logic.
-			add_filter( 'upgrader_source_selection', array( $this, 'fix_folder_name' ), 10, 4 );
+			// Folder Selection Fix (Elite Folder Mapping).
+			add_filter( 'upgrader_source_selection', array( $this, 'upgrader_source_selection' ), 10, 2 );
 		}
 
 		/**
@@ -122,18 +122,11 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 
 			if ( $github_data && ! empty( $github_version ) && version_compare( $github_version, $local_version, '>' ) ) {
 				$obj              = new stdClass();
-				$obj->slug        = $this->github_repo; // Must match the 'plugin' parameter in the URL.
+				$obj->slug        = $this->github_repo;
 				$obj->plugin      = $this->plugin_slug;
 				$obj->new_version = $github_version;
 				$obj->url         = 'https://github.com/' . $this->github_user . '/' . $this->github_repo;
 				$obj->package     = isset( $github_data->zipball_url ) ? $github_data->zipball_url : '';
-
-				$asset_url  = 'https://raw.githubusercontent.com/' . $this->github_user . '/' . $this->github_repo . '/main/assets/';
-				$obj->icons = array(
-					'128x128' => $asset_url . 'icon-128x128.png',
-					'256x256' => $asset_url . 'icon-256x256.png',
-					'default' => $asset_url . 'icon-256x256.png',
-				);
 
 				$transient->response[ $this->plugin_slug ] = $obj;
 			}
@@ -156,7 +149,6 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 
 			$github_data = $this->get_github_data();
 			$local_data  = $this->get_local_plugin_data();
-			$asset_url   = 'https://raw.githubusercontent.com/' . $this->github_user . '/' . $this->github_repo . '/main/assets/';
 			$readme_data = $this->get_remote_readme_data();
 
 			$result = new stdClass();
@@ -172,84 +164,49 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 			$result->tested       = $readme_data['tested'];
 			$result->requires_php = $readme_data['requires_php'];
 
-			// SECTIONS: Pure Description, Installation, Changelog.
 			$result->sections = array(
 				'description'  => $readme_data['sections']['description'],
 				'installation' => $readme_data['sections']['installation'],
 				'changelog'    => $readme_data['sections']['changelog'],
 			);
 
-			$result->banners = array(
-				'low'  => $asset_url . 'banner-772x250.png',
-				'high' => $asset_url . 'banner-1544x500.png',
-			);
-
 			return $result;
 		}
 
 		/**
-		 * Get data from remote readme.txt file with Robust Parsing and Elite Fallback.
+		 * Get data from remote readme.txt.
 		 *
 		 * @return array
 		 */
 		private function get_remote_readme_data() {
-			// Pre-initialize with ELITE FALLBACK (To never show empty info).
 			$data = array(
 				'requires'     => '6.0',
 				'tested'       => '7.0',
 				'requires_php' => '8.1',
 				'sections'     => array(
-					'description'  => '<strong>EWEB - Flex Menu Accordion Pro</strong> is a premium, high-performance menu system designed for modern WordPress environments. Built for Elite speed and stability.',
-					'installation' => '<ul><li>Upload via WordPress.</li><li>Activate the Elite Engine.</li><li>Enjoy high-fidelity interactive food menus.</li></ul>',
-					'changelog'    => '<h4>18.2.2</h4><ul><li>Branding: Renamed to EWEB - Flex Menu Accordion Pro.</li><li>Fix: Full restoration of custom fields.</li><li>Fix: Compatibility metadata (Tested up to 7.0).</li></ul>',
+					'description'  => '<strong>EWEB - Flex Menu Pro</strong> is a premium, high-performance menu system.',
+					'installation' => '<ul><li>Upload via WordPress.</li><li>Activate the Elite Engine.</li></ul>',
+					'changelog'    => '<h4>18.2.4</h4><ul><li>Fix: Elite folder selection (Improved Mapping).</li><li>Branding: Unified Elite Menu Pro naming.</li></ul>',
 				),
 			);
 
 			$url      = 'https://raw.githubusercontent.com/' . $this->github_user . '/' . $this->github_repo . '/main/readme.txt';
 			$response = wp_remote_get( $url, array( 'timeout' => 15 ) );
 
-			if ( is_wp_error( $response ) ) {
-				return $data;
-			}
-
-			$body = wp_remote_retrieve_body( $response );
-			if ( empty( $body ) ) {
-				return $data;
-			}
-
-			// 1. Parse Headers.
-			if ( preg_match( '/Requires at least:\s*(.*)/i', $body, $matches ) ) {
-				$data['requires'] = trim( $matches[1] );
-			}
-			if ( preg_match( '/Tested up to:\s*(.*)/i', $body, $matches ) ) {
-				$data['tested'] = trim( $matches[1] );
-			}
-			if ( preg_match( '/Requires PHP:\s*(.*)/i', $body, $matches ) ) {
-				$data['requires_php'] = trim( $matches[1] );
-			}
-
-			// 2. Parse Sections with Ultra-Flexible Regex (Robust Parsing).
-			$section_headers = array(
-				'description'  => 'Description',
-				'installation' => 'Installation',
-				'changelog'    => 'Changelog',
-			);
-
-			foreach ( $section_headers as $key => $header ) {
-				$pattern = '/==\s*' . preg_quote( $header, '/' ) . '\s*==\s*(.*?)\s*((==\s*[a-zA-Z0-9 ]+\s*==)|$)/is';
-				if ( preg_match( $pattern, $body, $matches ) ) {
-					$content = trim( $matches[1] );
-					if ( ! empty( $content ) ) {
-						// Convert Markdown bullets (*) to standard HTML lists.
-						$content = preg_replace( '/^\*\s+(.*)$/m', '<li>$1</li>', $content );
-						if ( strpos( $content, '<li>' ) !== false ) {
-							$content = '<ul>' . $content . '</ul>';
-						}
-						$data['sections'][ $key ] = wpautop( $content );
+			if ( ! is_wp_error( $response ) ) {
+				$body = wp_remote_retrieve_body( $response );
+				if ( ! empty( $body ) ) {
+					if ( preg_match( '/Requires at least:\s*(.*)/i', $body, $matches ) ) {
+						$data['requires'] = trim( $matches[1] );
+					}
+					if ( preg_match( '/Tested up to:\s*(.*)/i', $body, $matches ) ) {
+						$data['tested'] = trim( $matches[1] );
+					}
+					if ( preg_match( '/Requires PHP:\s*(.*)/i', $body, $matches ) ) {
+						$data['requires_php'] = trim( $matches[1] );
 					}
 				}
 			}
-
 			return $data;
 		}
 
@@ -275,21 +232,19 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 		}
 
 		/**
-		 * Fix folder name after update.
+		 * Elite folder mapping logic.
 		 *
-		 * @param string $source        The source path.
-		 * @param string $remote_source The remote source path.
-		 * @param object $upgrader      The upgrader object.
-		 * @param array  $hook_extra    Extra arguments.
+		 * @param string $source Path to the source directory.
+		 * @param string $remote_source Path to the remote source directory.
 		 * @return string
 		 */
-		public function fix_folder_name( $source, $remote_source, $upgrader, $hook_extra ) {
-			if ( isset( $hook_extra['plugin'] ) && $hook_extra['plugin'] === $this->plugin_slug ) {
-				global $wp_filesystem;
-				$new_source = trailingslashit( $remote_source ) . $this->github_repo;
-				if ( $source !== $new_source ) {
-					if ( $wp_filesystem->move( $source, $new_source ) ) {
-						return $new_source;
+		public function upgrader_source_selection( $source, $remote_source ) {
+			if ( strpos( $source, $this->github_repo ) !== false ) {
+				$corrected_source = trailingslashit( $remote_source ) . $this->github_repo . '/';
+				if ( $source !== $corrected_source ) {
+					global $wp_filesystem;
+					if ( $wp_filesystem->move( $source, $corrected_source ) ) {
+						return $corrected_source;
 					}
 				}
 			}
