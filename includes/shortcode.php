@@ -40,16 +40,27 @@ function spfa_menu_shortcode( $atts ) {
 		<div class="spfa-nav-grid">
 			<?php
 			foreach ( $sections as $s_index => $section ) :
-				$color        = get_post_meta( $section->ID, 'spfa_color', true ) ?: '#A52A2A';
+				$color        = get_post_meta( $section->ID, 'spfa_color', true );
+				if ( ! $color ) {
+					$color = '#A52A2A';
+				}
 				$nav_subtitle = get_post_meta( $section->ID, 'spfa_nav_subtitle', true );
-				$thumb        = get_the_post_thumbnail_url( $section->ID, 'large' ) ?: ( $plugin_url . 'assets/images/header.webp' );
+				$thumb        = get_the_post_thumbnail_url( $section->ID, 'large' );
+				if ( ! $thumb ) {
+					$thumb = $plugin_url . 'assets/images/header.webp';
+				}
 
 				$section_items = get_posts(
 					array(
 						'post_type'      => 'menu_item',
 						'posts_per_page' => -1,
 						'fields'         => 'ids',
-						'meta_query'     => array( array( 'key' => 'spfa_parent_section', 'value' => $section->ID ) ),
+						'meta_query'     => array(
+							array(
+								'key'   => 'spfa_parent_section',
+								'value' => $section->ID,
+							),
+						),
 					)
 				);
 
@@ -84,11 +95,12 @@ function spfa_menu_shortcode( $atts ) {
 							<div class="spfa-tab-stack">
 								<?php
 								foreach ( $categories as $cat_index => $cat ) :
-									if ( $cat->parent != 0 ) {
+									if ( 0 !== $cat->parent ) {
 										continue;
 									}
+									$is_active = ( 0 === $s_index && 0 === $cat_index ) ? 'active' : '';
 									?>
-									<button class="spfa-tab-trigger <?php echo ( $s_index === 0 && $cat_index === 0 ) ? 'active' : ''; ?>" 
+									<button class="spfa-tab-trigger <?php echo esc_attr( $is_active ); ?>" 
 											data-section="<?php echo esc_attr( $section->post_name ); ?>" 
 											data-category="<?php echo esc_attr( $cat->slug ); ?>">
 										<?php echo esc_html( $cat->name ); ?>
@@ -107,25 +119,39 @@ function spfa_menu_shortcode( $atts ) {
 				$color        = get_post_meta( $section->ID, 'spfa_color', true );
 				$sec_subtitle = get_post_meta( $section->ID, 'spfa_subtitle', true );
 
-				$cat_color = get_post_meta( $section->ID, 'spfa_catering_color', true ) ?: '#A98856';
+				$cat_color = get_post_meta( $section->ID, 'spfa_catering_color', true );
+				if ( ! $cat_color ) {
+					$cat_color = '#A98856';
+				}
 				$cat_title = get_post_meta( $section->ID, 'spfa_catering_title', true );
 				$cat_sub   = get_post_meta( $section->ID, 'spfa_catering_subtitle', true );
-				$cat_btn   = get_post_meta( $section->ID, 'spfa_catering_btn_text', true ) ?: 'Start Your Catering Inquiry';
-				$cat_link  = get_post_meta( $section->ID, 'spfa_catering_btn_link', true ) ?: '/contact-us/';
+				$cat_btn   = get_post_meta( $section->ID, 'spfa_catering_btn_text', true );
+				if ( ! $cat_btn ) {
+					$cat_btn = 'Start Your Catering Inquiry';
+				}
+				$cat_link  = get_post_meta( $section->ID, 'spfa_catering_btn_link', true );
+				if ( ! $cat_link ) {
+					$cat_link = '/contact-us/';
+				}
 
 				$section_items_ids = get_posts(
 					array(
 						'post_type'      => 'menu_item',
 						'posts_per_page' => -1,
 						'fields'         => 'ids',
-						'meta_query'     => array( array( 'key' => 'spfa_parent_section', 'value' => $section->ID ) ),
+						'meta_query'     => array(
+							array(
+								'key'   => 'spfa_parent_section',
+								'value' => $section->ID,
+							),
+						),
 					)
 				);
 				$all_terms         = ! empty( $section_items_ids ) ? wp_get_object_terms( $section_items_ids, 'menu_category' ) : array();
 
 				$tabs = array();
 				foreach ( $all_terms as $t ) {
-					if ( $t->parent == 0 ) {
+					if ( 0 === $t->parent ) {
 						$tabs[] = $t;
 					}
 				}
@@ -135,8 +161,9 @@ function spfa_menu_shortcode( $atts ) {
 						return (int) get_term_meta( $a->term_id, 'spfa_order', true ) - (int) get_term_meta( $b->term_id, 'spfa_order', true );
 					}
 				);
+				$section_active = ( 0 === $s_index ) ? 'active' : '';
 				?>
-				<div id="section-<?php echo esc_attr( $section->post_name ); ?>" class="spfa-menu-section <?php echo $s_index === 0 ? 'active' : ''; ?>" style="--section-color: <?php echo esc_attr( $color ); ?>;">
+				<div id="section-<?php echo esc_attr( $section->post_name ); ?>" class="spfa-menu-section <?php echo esc_attr( $section_active ); ?>" style="--section-color: <?php echo esc_attr( $color ); ?>;">
 					<div class="spfa-section-header">
 						<div class="spfa-header-text-wrap">
 							<h2><?php echo wp_kses_post( $section->post_title ); ?></h2>
@@ -149,12 +176,15 @@ function spfa_menu_shortcode( $atts ) {
 							<div class="spfa-section-line"></div>
 						</div>
 						<?php if ( $sec_subtitle ) : ?>
-							<div class="spfa-section-subtitle"><?php echo wpautop( do_shortcode( $sec_subtitle ) ); ?></div>
+							<div class="spfa-section-subtitle"><?php echo wp_kses_post( wpautop( do_shortcode( $sec_subtitle ) ) ); ?></div>
 						<?php endif; ?>
 					</div>
 
-					<?php foreach ( $tabs as $t_index => $tab ) : ?>
-						<div id="cat-<?php echo esc_attr( $section->post_name ); ?>-<?php echo esc_attr( $tab->slug ); ?>" class="spfa-category-content <?php echo ( $s_index === 0 && $t_index === 0 ) ? 'active' : ''; ?>">
+					<?php
+					foreach ( $tabs as $t_index => $tab ) :
+						$cat_active = ( 0 === $s_index && 0 === $t_index ) ? 'active' : '';
+						?>
+						<div id="cat-<?php echo esc_attr( $section->post_name ); ?>-<?php echo esc_attr( $tab->slug ); ?>" class="spfa-category-content <?php echo esc_attr( $cat_active ); ?>">
 							<div class="spfa-subcategory-block">
 								<div class="spfa-image2-header">
 									<div class="spfa-decorative-line"></div>
@@ -163,7 +193,10 @@ function spfa_menu_shortcode( $atts ) {
 								</div>
 								<?php
 								$tab_desc    = get_term_meta( $tab->term_id, 'spfa_cat_description', true );
-								$rich_groups = get_term_meta( $tab->term_id, 'spfa_rich_groups', true ) ?: array();
+								$rich_groups = get_term_meta( $tab->term_id, 'spfa_rich_groups', true );
+								if ( ! is_array( $rich_groups ) ) {
+									$rich_groups = array();
+								}
 
 								$main_group_name = trim( $tab->name );
 								$main_group_desc = isset( $rich_groups[ $main_group_name ] ) ? $rich_groups[ $main_group_name ] : '';
@@ -171,10 +204,10 @@ function spfa_menu_shortcode( $atts ) {
 								if ( $tab_desc || $main_group_desc ) {
 									echo '<div class="spfa-subcategory-desc">';
 									if ( $tab_desc ) {
-										echo wpautop( do_shortcode( $tab_desc ) );
+										echo wp_kses_post( wpautop( do_shortcode( $tab_desc ) ) );
 									}
 									if ( $main_group_desc ) {
-										echo wpautop( do_shortcode( $main_group_desc ) );
+										echo wp_kses_post( wpautop( do_shortcode( $main_group_desc ) ) );
 									}
 									echo '</div>';
 								}
@@ -192,7 +225,12 @@ function spfa_menu_shortcode( $atts ) {
 												'terms'    => $tab->term_id,
 											),
 										),
-										'meta_query'     => array( array( 'key' => 'spfa_parent_section', 'value' => $section->ID ) ),
+										'meta_query'     => array(
+											array(
+												'key'   => 'spfa_parent_section',
+												'value' => $section->ID,
+											),
+										),
 									)
 								);
 
@@ -201,8 +239,11 @@ function spfa_menu_shortcode( $atts ) {
 								$current_chunk = array();
 
 								foreach ( $items as $item ) {
-									$g_raw = trim( get_post_meta( $item->ID, 'spfa_item_group', true ) ) ?: 'default';
-									$g     = ( sanitize_title( $g_raw ) === sanitize_title( $tab->name ) ) ? 'default' : $g_raw;
+									$g_raw = trim( get_post_meta( $item->ID, 'spfa_item_group', true ) );
+									if ( ! $g_raw ) {
+										$g_raw = 'default';
+									}
+									$g = ( sanitize_title( $g_raw ) === sanitize_title( $tab->name ) ) ? 'default' : $g_raw;
 
 									if ( $g !== $current_group ) {
 										if ( ! empty( $current_chunk ) ) {
@@ -228,12 +269,12 @@ function spfa_menu_shortcode( $atts ) {
 									$group_name     = $chunk['group'];
 									$items_in_group = $chunk['items'];
 
-									if ( $group_name !== 'default' ) :
+									if ( 'default' !== $group_name ) :
 										?>
 										<div class="spfa-internal-group-header">
 											<h4 class="spfa-internal-group-title"><?php echo esc_html( $group_name ); ?></h4>
 											<?php if ( isset( $rich_groups[ $group_name ] ) && ! empty( $rich_groups[ $group_name ] ) ) : ?>
-												<div class="spfa-internal-group-desc"><?php echo wpautop( do_shortcode( $rich_groups[ $group_name ] ) ); ?></div>
+												<div class="spfa-internal-group-desc"><?php echo wp_kses_post( wpautop( do_shortcode( $rich_groups[ $group_name ] ) ) ); ?></div>
 											<?php endif; ?>
 										</div>
 									<?php endif; ?>
@@ -242,7 +283,10 @@ function spfa_menu_shortcode( $atts ) {
 										foreach ( $items_in_group as $item ) :
 											$dish_subtitle = get_post_meta( $item->ID, 'spfa_item_subtitle', true );
 											$details       = get_post_meta( $item->ID, 'spfa_item_details', true );
-											$thumb         = get_the_post_thumbnail_url( $item->ID, 'medium_large' ) ?: ( $plugin_url . 'assets/images/header.webp' );
+											$thumb         = get_the_post_thumbnail_url( $item->ID, 'medium_large' );
+											if ( ! $thumb ) {
+												$thumb = $plugin_url . 'assets/images/header.webp';
+											}
 											?>
 											<div class="spfa-dish-card">
 												<div class="spfa-dish-top-layer">
@@ -258,10 +302,10 @@ function spfa_menu_shortcode( $atts ) {
 												</div>
 												<div class="spfa-dish-bottom-layer">
 													<div class="spfa-dish-content">
-														<div class="spfa-dish-description"><?php echo wpautop( wp_kses_post( $item->post_content ) ); ?></div>
+														<div class="spfa-dish-description"><?php echo wp_kses_post( wpautop( wp_kses_post( $item->post_content ) ) ); ?></div>
 														<?php if ( $details ) : ?>
 															<div class="spfa-dish-ingredients">
-																<?php echo wpautop( wp_kses_post( $details ) ); ?>
+																<?php echo wp_kses_post( wpautop( wp_kses_post( $details ) ) ); ?>
 															</div>
 														<?php endif; ?>
 													</div>
@@ -277,14 +321,14 @@ function spfa_menu_shortcode( $atts ) {
 						<?php
 						$bev_text       = get_post_meta( $section->ID, 'spfa_beverages', true );
 						$bev_img_custom = get_post_meta( $section->ID, 'spfa_beverages_img', true );
-						$bev_img_url    = $bev_img_custom ?: ( $plugin_url . 'assets/images/beverages-1.webp' );
+						$bev_img_url    = $bev_img_custom ? $bev_img_custom : ( $plugin_url . 'assets/images/beverages-1.webp' );
 						?>
 						<fieldset class="spfa-beverage-box">
 							<legend>Beverages — Passport Beverage Bar</legend>
 							<img src="<?php echo esc_url( $bev_img_url ); ?>" class="spfa-bev-img" alt="Beverages">
 							<div class="spfa-bev-content">
 								<?php if ( $bev_text ) : ?>
-									<?php echo wpautop( do_shortcode( $bev_text ) ); ?>
+									<?php echo wp_kses_post( wpautop( do_shortcode( $bev_text ) ) ); ?>
 								<?php else : ?>
 									<h5>A global-inspired selection of refreshing drinks:</h5>
 									<ul>
@@ -297,8 +341,8 @@ function spfa_menu_shortcode( $atts ) {
 							</div>
 						</fieldset>
 						<div class="spfa-catering-box" style="background-color: <?php echo esc_attr( $cat_color ); ?> !important;">
-							<div class="spfa-catering-title"><?php echo wpautop( do_shortcode( $cat_title ) ); ?></div>
-							<div class="spfa-catering-desc"><?php echo wpautop( do_shortcode( $cat_sub ) ); ?></div>
+							<div class="spfa-catering-title"><?php echo wp_kses_post( wpautop( do_shortcode( $cat_title ) ) ); ?></div>
+							<div class="spfa-catering-desc"><?php echo wp_kses_post( wpautop( do_shortcode( $cat_sub ) ) ); ?></div>
 							<button class="spfa-btn-dark" onclick="window.location.href='<?php echo esc_url( $cat_link ); ?>'"><?php echo esc_html( $cat_btn ); ?></button>
 						</div>
 					</div>

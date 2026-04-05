@@ -85,10 +85,13 @@ function spfa_plugin_activate() {
  */
 function spfa_category_fields_cb( $term ) {
 	$desc        = get_term_meta( $term->term_id, 'spfa_cat_description', true );
-	$rich_groups = get_term_meta( $term->term_id, 'spfa_rich_groups', true ) ?: array();
+	$rich_groups = get_term_meta( $term->term_id, 'spfa_rich_groups', true );
+	if ( ! is_array( $rich_groups ) ) {
+		$rich_groups = array();
+	}
 
 	// Detect groups from items in this category.
-	$items    = get_posts(
+	$items = get_posts(
 		array(
 			'post_type'      => 'menu_item',
 			'posts_per_page' => -1,
@@ -101,10 +104,11 @@ function spfa_category_fields_cb( $term ) {
 			),
 		)
 	);
+
 	$detected = array();
 	foreach ( $items as $i ) {
 		$g = trim( get_post_meta( $i->ID, 'spfa_item_group', true ) );
-		if ( $g && strtolower( $g ) !== 'default' ) {
+		if ( $g && 'default' !== strtolower( $g ) ) {
 			$detected[] = $g;
 		}
 	}
@@ -147,8 +151,17 @@ add_action( 'menu_category_edit_form_fields', 'spfa_category_fields_cb' );
  * @return void
  */
 function spfa_save_taxonomy_meta( $term_id ) {
+	// Basic field existence check.
+	if ( ! isset( $_POST['spfa_cat_description'] ) && ! isset( $_POST['spfa_group_names'] ) ) {
+		return;
+	}
+
 	if ( isset( $_POST['spfa_cat_description'] ) ) {
-		update_term_meta( $term_id, 'spfa_cat_description', wp_kses_post( wp_unslash( $_POST['spfa_cat_description'] ) ) );
+		update_term_meta(
+			$term_id,
+			'spfa_cat_description',
+			wp_kses_post( wp_unslash( $_POST['spfa_cat_description'] ) )
+		);
 	}
 
 	if ( isset( $_POST['spfa_group_names'] ) && isset( $_POST['spfa_group_descs'] ) ) {
@@ -194,18 +207,30 @@ function spfa_item_meta_cb( $post ) {
 function spfa_sec_config_cb( $post ) {
 	wp_nonce_field( 'spfa_save_master', 'spfa_master_nonce' );
 	$color        = get_post_meta( $post->ID, 'spfa_color', true );
+	if ( ! $color ) {
+		$color = '#A52A2A';
+	}
 	$subtitle     = get_post_meta( $post->ID, 'spfa_subtitle', true );
 	$nav_subtitle = get_post_meta( $post->ID, 'spfa_nav_subtitle', true );
 	$bev_img      = get_post_meta( $post->ID, 'spfa_beverages_img', true );
-	$cat_color    = get_post_meta( $post->ID, 'spfa_catering_color', true ) ?: '#A98856';
+	$cat_color    = get_post_meta( $post->ID, 'spfa_catering_color', true );
+	if ( ! $cat_color ) {
+		$cat_color = '#A98856';
+	}
 	$cat_title    = get_post_meta( $post->ID, 'spfa_catering_title', true );
 	$cat_sub      = get_post_meta( $post->ID, 'spfa_catering_subtitle', true );
-	$cat_btn      = get_post_meta( $post->ID, 'spfa_catering_btn_text', true ) ?: 'Start Your Catering Inquiry';
-	$cat_link     = get_post_meta( $post->ID, 'spfa_catering_btn_link', true ) ?: '/contact-us/';
+	$cat_btn      = get_post_meta( $post->ID, 'spfa_catering_btn_text', true );
+	if ( ! $cat_btn ) {
+		$cat_btn = 'Start Your Catering Inquiry';
+	}
+	$cat_link     = get_post_meta( $post->ID, 'spfa_catering_btn_link', true );
+	if ( ! $cat_link ) {
+		$cat_link = '/contact-us/';
+	}
 	?>
 	<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
 		<div>
-			<p><label>Main Color:</label><input type="color" name="spfa_color" value="<?php echo esc_attr( $color ?: '#A52A2A' ); ?>"></p>
+			<p><label>Main Color:</label><input type="color" name="spfa_color" value="<?php echo esc_attr( $color ); ?>"></p>
 			<p><label>Nav Subtitle:</label><input type="text" name="spfa_nav_subtitle" value="<?php echo esc_attr( $nav_subtitle ); ?>" style="width:100%;"></p>
 			<p><label>Header Subtitle:</label><br><?php wp_editor( $subtitle, 'spfa_subtitle', array( 'textarea_name' => 'spfa_subtitle', 'media_buttons' => false, 'textarea_rows' => 2, 'teeny' => true ) ); ?></p>
 			<p><label>Bev Image:</label><input type="text" name="spfa_beverages_img" id="spfa_beverages_img" value="<?php echo esc_attr( $bev_img ); ?>" style="width:70%;"><button type="button" class="button spfa-upload-img" data-target="spfa_beverages_img">Select</button></p>
@@ -240,9 +265,18 @@ function spfa_sec_config_cb( $post ) {
  */
 function spfa_cat_parent_cb( $post ) {
 	$parent_id = get_post_meta( $post->ID, 'spfa_parent_section', true );
-	$sections  = get_posts( array( 'post_type' => 'menu_section', 'posts_per_page' => -1 ) );
+	$sections  = get_posts(
+		array(
+			'post_type'      => 'menu_section',
+			'posts_per_page' => -1,
+		)
+	);
 	?>
-	<p><select name="spfa_parent_section" style="width:100%;"><option value="">-- Choose Section --</option><?php foreach ( $sections as $s ) : ?><option value="<?php echo $s->ID; ?>" <?php selected( $parent_id, $s->ID ); ?>><?php echo esc_html( $s->post_title ); ?></option><?php endforeach; ?></select></p>
+	<p><select name="spfa_parent_section" style="width:100%;"><option value="">-- Choose Section --</option>
+	<?php foreach ( $sections as $s ) : ?>
+		<option value="<?php echo esc_attr( $s->ID ); ?>" <?php selected( $parent_id, $s->ID ); ?>><?php echo esc_html( $s->post_title ); ?></option>
+	<?php endforeach; ?>
+	</select></p>
 	<?php
 }
 
@@ -273,7 +307,18 @@ function spfa_save_custom_meta( $post_id ) {
 	}
 	$post_type = get_post_type( $post_id );
 	if ( 'menu_section' === $post_type ) {
-		$fields = array( 'spfa_color', 'spfa_subtitle', 'spfa_nav_subtitle', 'spfa_beverages', 'spfa_beverages_img', 'spfa_catering_color', 'spfa_catering_title', 'spfa_catering_subtitle', 'spfa_catering_btn_text', 'spfa_catering_btn_link' );
+		$fields = array(
+			'spfa_color',
+			'spfa_subtitle',
+			'spfa_nav_subtitle',
+			'spfa_beverages',
+			'spfa_beverages_img',
+			'spfa_catering_color',
+			'spfa_catering_title',
+			'spfa_catering_subtitle',
+			'spfa_catering_btn_text',
+			'spfa_catering_btn_link',
+		);
 		foreach ( $fields as $f ) {
 			if ( isset( $_POST[ $f ] ) ) {
 				update_post_meta( $post_id, $f, wp_kses_post( wp_unslash( $_POST[ $f ] ) ) );
@@ -282,16 +327,32 @@ function spfa_save_custom_meta( $post_id ) {
 	}
 	if ( 'menu_item' === $post_type ) {
 		if ( isset( $_POST['spfa_parent_section'] ) ) {
-			update_post_meta( $post_id, 'spfa_parent_section', sanitize_text_field( wp_unslash( $_POST['spfa_parent_section'] ) ) );
+			update_post_meta(
+				$post_id,
+				'spfa_parent_section',
+				sanitize_text_field( wp_unslash( $_POST['spfa_parent_section'] ) )
+			);
 		}
 		if ( isset( $_POST['spfa_item_subtitle'] ) ) {
-			update_post_meta( $post_id, 'spfa_item_subtitle', sanitize_text_field( wp_unslash( $_POST['spfa_item_subtitle'] ) ) );
+			update_post_meta(
+				$post_id,
+				'spfa_item_subtitle',
+				sanitize_text_field( wp_unslash( $_POST['spfa_item_subtitle'] ) )
+			);
 		}
 		if ( isset( $_POST['spfa_item_group'] ) ) {
-			update_post_meta( $post_id, 'spfa_item_group', sanitize_text_field( wp_unslash( $_POST['spfa_item_group'] ) ) );
+			update_post_meta(
+				$post_id,
+				'spfa_item_group',
+				sanitize_text_field( wp_unslash( $_POST['spfa_item_group'] ) )
+			);
 		}
 		if ( isset( $_POST['spfa_item_details'] ) ) {
-			update_post_meta( $post_id, 'spfa_item_details', wp_kses_post( wp_unslash( $_POST['spfa_item_details'] ) ) );
+			update_post_meta(
+				$post_id,
+				'spfa_item_details',
+				wp_kses_post( wp_unslash( $_POST['spfa_item_details'] ) )
+			);
 		}
 	}
 }
@@ -303,6 +364,14 @@ add_action( 'save_post', 'spfa_save_custom_meta' );
  * @return void
  */
 function spfa_register_rest_meta() {
-	register_meta( 'term', 'spfa_cat_description', array( 'type' => 'string', 'single' => true, 'show_in_rest' => true ) );
+	register_meta(
+		'term',
+		'spfa_cat_description',
+		array(
+			'type'         => 'string',
+			'single'       => true,
+			'show_in_rest' => true,
+		)
+	);
 }
 add_action( 'init', 'spfa_register_rest_meta' );

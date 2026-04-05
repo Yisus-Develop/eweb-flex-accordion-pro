@@ -186,7 +186,7 @@ if ( ! class_exists( 'EWEB_GitHub_Updater' ) ) {
 				'sections'     => array(
 					'description'  => '<strong>EWEB - Flex Menu Pro</strong> is a premium, high-performance menu system.',
 					'installation' => '<ul><li>Upload via WordPress.</li><li>Activate the Elite Engine.</li></ul>',
-					'changelog'    => '<h4>18.2.4</h4><ul><li>Fix: Elite folder selection (Improved Mapping).</li><li>Branding: Unified Elite Menu Pro naming.</li></ul>',
+					'changelog'    => '<h4>18.2.5</h4><ul><li>Elite Sync: Synchronized repository to eweb-flex-menu-pro.</li><li>Branding: Perfected Menu Pro identity.</li></ul>',
 				),
 			);
 
